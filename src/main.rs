@@ -5,110 +5,134 @@ use std::io;
 use std::collections::HashMap;
 
 fn main() {
-    println!("Hello, world!");
+    let mut board_length = String::new();
+    io::stdin().read_line(&mut board_length)
+        .expect("Failed to read board length input");
+    
+    let board_length: u8 = match board_length.trim().parse() {
+        Ok(num) => num,
+        Err(_) => 3, // if no number is provided, give board a default length
+    };
 
-    // let mut input = String::new();
-    // io::stdin().read_line(&mut input)
-    //     .expect("Failed to read line");
+    let game = Game {
+        is_over: false,
+        turn_counter: 0,
+        board: Board {
+            cells: HashMap::new(),
+            length: board_length
+        }
+    };
 
-    // println!("Your input {}", input);
+    game.play();
 
-    let mut x = Vec::new();
-    x.push((0,0));
-    x.push((1,0));
-    x.push((2,0));
-    x.push((3,0));
-    x.push((4,0));
-    let size3_win_combos = win_combinations(3);
-    println!("{:?}", size3_win_combos);
-    /* output of win_combinations(3) =
-        [
-            [(0, 0), (0, 1), (0, 2)], 
-            [(0, 0), (1, 0), (2, 0)], 
+    // let mut game_over = false;
+    // let mut turn = 1;
+    // let mut board = Board{
+    //     cells: HashMap::new(), 
+    //     length: board_length
+    // };
 
-            [(1, 0), (1, 1), (1, 2)], 
-            [(0, 1), (1, 1), (2, 1)], 
+    // while !game_over {
+    //     if turn % 2 == 0 {
+    //         prompt_player(&mut board, PlayerValue::X);
+    //     } else {
+    //         prompt_player(&mut board, PlayerValue::O);
+    //     }
 
-            [(2, 0), (2, 1), (2, 2)], 
-            [(0, 2), (1, 2), (2, 2)], 
-
-            [(0, 0), (1, 1), (2, 2)], 
-            [(0, 2), (1, 1), (2, 0)]
-        ]
-    */
-
-    let size5_win_combos = win_combinations(5);
-    let won = size5_win_combos.contains(&x);
-    println!("{:?}", size5_win_combos);
-    println!("{}", won);
-    /* output of win_combinations(5) =
-        [
-            [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)], 
-            [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)], 
-
-            [(1, 0), (1, 1), (1, 2), (1, 3), (1, 4)], 
-            [(0, 1), (1, 1), (2, 1), (3, 1), (4, 1)], 
-
-            [(2, 0), (2, 1), (2, 2), (2, 3), (2, 4)], 
-            [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2)], 
-
-            [(3, 0), (3, 1), (3, 2), (3, 3), (3, 4)], 
-            [(0, 3), (1, 3), (2, 3), (3, 3), (4, 3)], 
-
-            [(4, 0), (4, 1), (4, 2), (4, 3), (4, 4)], 
-            [(0, 4), (1, 4), (2, 4), (3, 4), (4, 4)], 
-
-            [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)], 
-            [(0, 4), (1, 3), (2, 2), (3, 1), (4, 0)]
-        ]
-    */
+    //     turn += 1;
+    //     if turn == 10 {
+    //         game_over = true;
+    //     }
+    // }
 }
 
 
-enum CellValue {
-    X,
-    O
+struct Game{
+    is_over: bool,
+    turn_counter: u8,
+    board: Board,
+}
+
+impl Game{
+
+    fn play(&mut self) {
+        while !self.is_over {
+            self.prompt_player();
+        }
+    }
+
+    /// prompt_player prompts a player to input his new move and
+    /// updates the board increases the turn counter
+    fn prompt_player(&mut self) {
+        println!("Enter tile coordinates, like: x,y");
+        let mut tile_coords = String::new();
+        io::stdin().read_line(&mut tile_coords)
+            .expect("Failed to read tile coordinates");
+        
+        let tile_coords: Vec<&str> = tile_coords.split(',').collect();
+        println!("{:?}", tile_coords);
+        // can maybe make this function recursive? 
+        // todo: parse tile_coords to u8's
+        // if no number chosen, or if number is outside of board size -> ask for user input again
+        // check whose turn it is, if even -> X, if odd -> O;
+        // check if tile wasn't already chosen
+        // if already chosen -> ask again for user input 
+        // if not chosen already -> add coords to board cells.
+        // check if a player has won
+        // if player has won -> end game
+        // if player hasn't won -> continue to next turn
+
+        // after a succesful turn -> draw board to convey new state
+
+        self.turn_counter += 1; // does turn_counter need to be mut?
+    }
 }
 
 struct Board {
-    cells: HashMap<(u8, u8), CellValue>,
+    cells: HashMap<(u8, u8), PlayerValue>, // not sure if i still want a map
+    // maybe i can use a (second) map to store al moves made by player X
+    // if this map doesn't contain the move of player O, and the move is within bounds
+    // the cell is open.
     length: u8,
 }
 
-
-// n is the length of the board
-fn win_combinations(n: u8) -> Vec<Vec<(u8, u8)>> {
-    let mut winnable_combinations = Vec::new();
-    let mut left_diagonal_combinations = Vec::new();
-    for i in 0..n {
+impl Board {
+    /// generate_win_combinations generates all possible win combinations for a board.
+    /// It returns a Vector containing Vectors that contain
+    /// cell positions in the form of a tuple/pair.
+    fn generate_win_combinations(&self) -> Vec<Vec<(u8, u8)>> {
+        let n = self.length;
+        let mut winnable_combinations = Vec::new();
+        let mut left_diagonal_combinations = Vec::new();
+        let mut right_diagonal_combinations = Vec::new();
         let mut rows = Vec::new();
         let mut columns = Vec::new();
-        for j in 0..n {
-            rows.push((i, j));
-            columns.push((j, i));
+        for i in 0..n {
+            for j in 0..n {
+                rows.push((i, j));
+                columns.push((j, i));
+            }
+            
+            left_diagonal_combinations.push((i, i));
+            right_diagonal_combinations.push((i, n-1-i));
+            winnable_combinations.push(rows);
+            winnable_combinations.push(columns);
+            rows = Vec::new();
+            columns = Vec::new();
         }
-        
-        left_diagonal_combinations.push((i, i));
-        winnable_combinations.push(rows);
-        winnable_combinations.push(columns);
+
+        winnable_combinations.push(left_diagonal_combinations);
+        winnable_combinations.push(right_diagonal_combinations);
+        return winnable_combinations;
     }
 
-    winnable_combinations.push(left_diagonal_combinations);
-
-    // see if this can be executed/placed in the for loop above.
-    let mut right_diagonal_combinations = Vec::new();
-    for i in 0..n {
-        let j = (n-1)-i;
-        right_diagonal_combinations.push((i, j));
+    /// draw draws the board on standard output
+    fn draw(&self) {
+        println!("board hellooo");
     }
-    winnable_combinations.push(right_diagonal_combinations);
-
-    return winnable_combinations;
 }
 
-
-// reverseVecItems() [(0,0), (0,1), (0,2)] -> [(0,0), (1,0), (2,0)]
-
-// ask user for board size, e.g 3 means a 3x3 board
-// input must be larger than 2, must be smaller than 256+1 (2^8+1)
-// 
+enum PlayerValue {
+    X,
+    O
+}
