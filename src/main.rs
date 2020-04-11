@@ -2,9 +2,11 @@
 // ./target/debug/tic_tac_toe.exe is the executable that has been made by cargo run
 
 use std::io;
+use std::cmp::Eq;
 use std::collections::HashMap;
 
 fn main() {
+    println!("Enter your wishes board length below: (default length is 3)");
     let mut board_length = String::new();
     io::stdin().read_line(&mut board_length)
         .expect("Failed to read board length input");
@@ -14,16 +16,20 @@ fn main() {
         Err(_) => 3, // if no number is provided, give board a default length
     };
 
+    let mut board = Board {
+        cells: HashMap::new(),
+        length: board_length
+    };
+
+    board.cells.insert((0,0), PlayerValue::O);
+    println!("\n");
+    board.draw();
+
     let game = Game {
         is_over: false,
         turn_counter: 0,
-        board: Board {
-            cells: HashMap::new(),
-            length: board_length
-        }
+        board: board,
     };
-
-    game.play();
 
     // let mut game_over = false;
     // let mut turn = 1;
@@ -128,10 +134,48 @@ impl Board {
 
     /// draw draws the board on standard output
     fn draw(&self) {
-        println!("board hellooo");
+        let mut output: Vec<String> = Vec::new();
+        // let two_spaces: String = String::from("  ");
+
+        output.push(String::from("  "));
+
+        let n = self.length;
+        for i in 0..n {
+            output.push(format!(" {}  ", i));
+        }
+        output.push(String::from("\n"));
+
+        output.push(String::from(" "));
+        for _ in 0..n {
+            output.push(String::from("----"));
+        }
+        output.push(String::from("-"));
+        output.push(String::from("\n"));
+
+        for i in 0..n {
+            output.push(format!("{}|", i));
+            for j in 0..n {
+                match self.cells.get(&(i,j)) {
+                    Some(value) if value == &PlayerValue::O => output.push(String::from(" O |")),
+                    Some(value) if value == &PlayerValue::X => output.push(String::from(" X |")),
+                    _ => output.push(String::from("   |")),
+                }
+            }
+
+            output.push(String::from("\n"));
+            output.push(String::from(" "));
+            for _ in 0..n {
+                output.push(String::from("----"));
+            }
+            output.push(String::from("-"));
+            output.push(String::from("\n"));
+        }
+
+        println!("{}", output.join(""));
     }
 }
 
+#[derive(PartialEq, Eq)]
 enum PlayerValue {
     X,
     O
