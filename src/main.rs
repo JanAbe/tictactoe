@@ -63,41 +63,46 @@ impl Game{
         // need to store this in game/board field. It is unecessary to generate all winnable combination each time this function is called,
         // as it doesn't change.
         let win_combinations = self.board.generate_win_combinations();
-        let mut player_won = true;
+        let mut player_won = false;
         // todo: atm is only works for a board of size 3
         // need to make this size independent!!!
         for i in 0..win_combinations.len() {
-        //     for j in 0..win_combinations[i].len()-1 {
-        //         player_won = match self.board.cells.get(&win_combinations[i][j]) {
-        //             Some(current_tile) =>
-        //                 match self.board.cells.get(&win_combinations[i][j+1]) {
-        //                     Some(next_tile) => (current_tile == next_tile) && player_won,
-        //                     _ => false
-        //                 }
-        //             _ => false
-        //         };
+            let mut previous_tile_chosen = false;
+            for j in 0..win_combinations[i].len()-1 {
+                match self.board.cells.get(&win_combinations[i][j]) {
+                    Some(current_tile) =>
+                        match self.board.cells.get(&win_combinations[i][j+1]) {
+                            Some(next_tile) => {
+                                player_won = (current_tile == next_tile) && previous_tile_chosen;
+                                previous_tile_chosen = current_tile == next_tile
+                            },
+                            _ => ()
+                        }
+                    _ => ()
+                };
 
-        //     }
-        //     if player_won {
-        //         break;
-        //     }
-
-            player_won = match self.board.cells.get(&win_combinations[i][0]) {
-                Some(first_tile) => 
-                    match self.board.cells.get(&win_combinations[i][1]) {
-                        Some(second_tile) => 
-                            match self.board.cells.get(&win_combinations[i][2]) {
-                                Some(third_tile) => (first_tile == second_tile) && (first_tile == third_tile),
-                                _ => false
-                            }
-                        _ => false
-                    }
-                _ => false
-            };
+            }
 
             if player_won {
                 break;
             }
+
+            // player_won = match self.board.cells.get(&win_combinations[i][0]) {
+            //     Some(first_tile) => 
+            //         match self.board.cells.get(&win_combinations[i][1]) {
+            //             Some(second_tile) => 
+            //                 match self.board.cells.get(&win_combinations[i][2]) {
+            //                     Some(third_tile) => (first_tile == second_tile) && (first_tile == third_tile),
+            //                     _ => false
+            //                 }
+            //             _ => false
+            //         }
+            //     _ => false
+            // };
+
+            // if player_won {
+            //     break;
+            // }
         }
 
         return player_won;
@@ -116,9 +121,6 @@ impl Game{
             self.prompt_player();
         }
 
-        // dit in een loop stoppen, dan bij Err(_) => continue schrijven ?
-        // maar dan heb ik wel een loop in een loop, omdat deze functie wordt aangeroepen in de game loop.
-        // Weet niet of dat erg is.
         let x: u8 = match tile_coords[0].parse() {
             Ok(num) => num,
             Err(_) => 0 //self.prompt_player(), // if parsing fails -> reprompt the user
@@ -147,20 +149,7 @@ impl Game{
             self.board.cells.insert((x,y), PlayerValue::O);
         }
 
-        // can maybe make this function recursive? 
-        // todo: parse tile_coords to u8's
-        // if no number chosen, or if number is outside of board size -> ask for user input again
-        // check whose turn it is, if even -> X, if odd -> O;
-        // check if tile wasn't already chosen
-        // if already chosen -> ask again for user input 
-        // if not chosen already -> add coords to board cells.
-        // check if a player has won
-        // if player has won -> end game
-        // if player hasn't won -> continue to next turn
-
-        // after a succesful turn -> draw board to convey new state
-
-        self.turn_counter += 1; // does turn_counter need to be mut?
+        self.turn_counter += 1;
         println!("");
         self.board.draw();
         self.is_over = self.check_player_won();
@@ -169,9 +158,6 @@ impl Game{
 
 struct Board {
     cells: HashMap<(u8, u8), PlayerValue>, // not sure if i still want a map
-    // maybe i can use a (second) map to store al moves made by player X
-    // if this map doesn't contain the move of player O, and the move is within bounds
-    // the cell is open.
     length: u8,
 }
 
