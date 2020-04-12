@@ -1,6 +1,3 @@
-// cargo run -> builds and executes the program
-// ./target/debug/tic_tac_toe.exe is the executable that has been made by cargo run
-
 use std::io;
 use std::cmp::Eq;
 use std::collections::HashMap;
@@ -13,35 +10,34 @@ fn main() {
     
     let board_length: u8 = match board_length.trim().parse() {
         Ok(num) => num,
-        Err(_) => 3, // if no number is provided, give board a default length
+        Err(_) => 3, // if no number is provided, give board a default length of 3
     };
 
-    let mut board = Board {
-        cells: HashMap::new(),
-        length: board_length
-    };
-
-    println!("\n");
-    board.draw();
-
-    let mut game = Game {
-        is_over: false,
-        turn_counter: 1,
-        board: board,
-    };
-
+    let mut game = Game::new(board_length);
+    game.board.draw(); // show empty board, before anyone has made a move
     game.play();
 }
-
 
 struct Game{
     is_over: bool,
     turn_counter: u8,
     board: Board,
+    win_combinations: Vec<Vec<(u8,u8)>>,
 }
 
 impl Game{
+    /// new creates a new instance of the Game struct
+    fn new(length: u8) -> Game {
+        let board = Board::new(length);
+        Game {
+            is_over: false,
+            turn_counter: 1,
+            win_combinations: board.generate_win_combinations(),
+            board,
+        }
+    }
 
+    /// play starts a game of tic tac toe
     fn play(&mut self) {
         while !self.is_over {
             self.prompt_player();
@@ -58,20 +54,15 @@ impl Game{
 
     // check_player_won checks if a player has won by looking at all possible win combinations.
     // for each win combination it looks which player has chosen the tile, and if all tiles within the
-    // winnable combination are chosen by teh same player.
+    // winnable combination are chosen by the same player.
     fn check_player_won(&self) -> bool {
-        // need to store this in game/board field. It is unecessary to generate all winnable combination each time this function is called,
-        // as it doesn't change.
-        let win_combinations = self.board.generate_win_combinations();
         let mut player_won = false;
-        // todo: atm is only works for a board of size 3
-        // need to make this size independent!!!
-        for i in 0..win_combinations.len() {
-            player_won = match self.board.cells.get(&win_combinations[i][0]) {
+        for i in 0..self.win_combinations.len() {
+            player_won = match self.board.cells.get(&self.win_combinations[i][0]) {
                 Some(first_tile) => 
-                    match self.board.cells.get(&win_combinations[i][1]) {
+                    match self.board.cells.get(&self.win_combinations[i][1]) {
                         Some(second_tile) => 
-                            match self.board.cells.get(&win_combinations[i][2]) {
+                            match self.board.cells.get(&self.win_combinations[i][2]) {
                                 Some(third_tile) => (first_tile == second_tile) && (first_tile == third_tile),
                                 _ => false
                             }
@@ -103,12 +94,12 @@ impl Game{
 
         let x: u8 = match tile_coords[0].parse() {
             Ok(num) => num,
-            Err(_) => 0 //self.prompt_player(), // if parsing fails -> reprompt the user
+            Err(_) => 0 // improve this
         };
 
         let y: u8 = match tile_coords[1].parse() {
             Ok(num) => num,
-            Err(_) => 0 //self.prompt_player(),
+            Err(_) => 0
         };
 
         let n = self.board.length;
@@ -137,11 +128,18 @@ impl Game{
 }
 
 struct Board {
-    cells: HashMap<(u8, u8), PlayerValue>, // not sure if i still want a map
+    cells: HashMap<(u8, u8), PlayerValue>,
     length: u8,
 }
 
 impl Board {
+    /// new creates a new instance of the Board struct
+    fn new(length: u8) -> Board {
+        Board {
+            cells: HashMap::new(),
+            length,
+        }
+    }
     /// generate_win_combinations generates all possible win combinations for a board.
     /// It returns a Vector containing Vectors that contain
     /// cell positions in the form of a tuple/pair.
@@ -173,24 +171,6 @@ impl Board {
 
     /// draw draws the board and displays it on standard output
     fn draw(&self) {
-        /*
-            // todo: improve display of first row
-            // atm each cell has a width of 3
-            // and for the first row in the middle, like _i_, the column number is placed.
-            // Problem: it doesn't work when the column_number becomes longer than 1 digit
-            // e.g. 12 or 44. It screws up the mark up of the first row.
-            // so need to build something that checks if the board_length is 1 digit, 2 digits or 3 digits long
-            // (can use the fact that the board length can never be longer than 255 (so need to support 3 digits max))
-            // let w: usize;
-            // if n < 10 {
-            //     w = 3; // -5-
-            // } else if n > 99 {
-            //     w = 5; // -244-
-            // } else {
-            //     w = 4; // -23-
-            // }
-        */
-
         let mut output: Vec<String> = Vec::new();
         output.push(String::from("  "));
 
