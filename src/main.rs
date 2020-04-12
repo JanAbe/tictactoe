@@ -67,42 +67,22 @@ impl Game{
         // todo: atm is only works for a board of size 3
         // need to make this size independent!!!
         for i in 0..win_combinations.len() {
-            let mut previous_tile_chosen = false;
-            for j in 0..win_combinations[i].len()-1 {
-                match self.board.cells.get(&win_combinations[i][j]) {
-                    Some(current_tile) =>
-                        match self.board.cells.get(&win_combinations[i][j+1]) {
-                            Some(next_tile) => {
-                                player_won = (current_tile == next_tile) && previous_tile_chosen;
-                                previous_tile_chosen = current_tile == next_tile
-                            },
-                            _ => ()
-                        }
-                    _ => ()
-                };
-
-            }
+            player_won = match self.board.cells.get(&win_combinations[i][0]) {
+                Some(first_tile) => 
+                    match self.board.cells.get(&win_combinations[i][1]) {
+                        Some(second_tile) => 
+                            match self.board.cells.get(&win_combinations[i][2]) {
+                                Some(third_tile) => (first_tile == second_tile) && (first_tile == third_tile),
+                                _ => false
+                            }
+                        _ => false
+                    }
+                _ => false
+            };
 
             if player_won {
                 break;
             }
-
-            // player_won = match self.board.cells.get(&win_combinations[i][0]) {
-            //     Some(first_tile) => 
-            //         match self.board.cells.get(&win_combinations[i][1]) {
-            //             Some(second_tile) => 
-            //                 match self.board.cells.get(&win_combinations[i][2]) {
-            //                     Some(third_tile) => (first_tile == second_tile) && (first_tile == third_tile),
-            //                     _ => false
-            //                 }
-            //             _ => false
-            //         }
-            //     _ => false
-            // };
-
-            // if player_won {
-            //     break;
-            // }
         }
 
         return player_won;
