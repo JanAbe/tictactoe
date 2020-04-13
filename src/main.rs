@@ -3,7 +3,7 @@ use std::cmp::Eq;
 use std::collections::HashMap;
 
 fn main() {
-    println!("Enter your wishes board length below: (default length is 3)");
+    println!("Enter your wished board length below: (default length is 3)");
     let mut board_length = String::new();
     io::stdin().read_line(&mut board_length)
         .expect("Failed to read board length input");
@@ -19,7 +19,6 @@ fn main() {
 }
 
 struct Game{
-    // state: GameState,
     turn_counter: u8,
     board: Board,
     win_combinations: Vec<Vec<(u8,u8)>>,
@@ -116,48 +115,60 @@ impl Game{
             println!("(Player O's turn)");
         }
 
-        println!("Enter tile coordinates, like: x,y");
-        let mut tile_coords = String::new();
-        io::stdin().read_line(&mut tile_coords)
-            .expect("Failed to read tile coordinates");
-        
-        let tile_coords: Vec<&str> = tile_coords.trim().split(',').collect();
-        if tile_coords.len() != 2 {
-            self.play_turn();
-        }
-
-        let x: u8 = match tile_coords[0].parse() {
-            Ok(num) => num,
-            Err(_) => 0 // improve this
-        };
-
-        let y: u8 = match tile_coords[1].parse() {
-            Ok(num) => num,
-            Err(_) => 0
-        };
-
-        let n = self.board.length;
-        if x > n || y > n {
-            println!("Provided coords are outside of board space. Choose again:");
-            self.play_turn();
-        }
-
-        let tile_is_taken = self.board.cells.contains_key(&(x,y));
-        if tile_is_taken {
-            println!("Tile is already chosen. Choose another tile.");
-            self.play_turn();
-        }
+        let tile_coords = self.prompt_player();
 
         if is_xs_turn {
-            self.board.cells.insert((x,y), PlayerValue::X);
+            self.board.cells.insert(tile_coords, PlayerValue::X);
         } else {
-            self.board.cells.insert((x,y), PlayerValue::O);
+            self.board.cells.insert(tile_coords, PlayerValue::O);
         }
 
         println!("");
         self.board.draw();
-        // self.state = self.get_state();
         return self.get_state();
+    }
+
+    /// prompt_player prompts a player to provide the coords of a tile
+    /// and returns these coords, correctly parsed
+    fn prompt_player(&self) -> (u8,u8) {
+        loop {
+            // ask and get input
+            println!("Enter tile coordinates, like: x,y");
+            let mut input = String::new();
+            io::stdin().read_line(&mut input)
+                .expect("Failed to read tile coordinates");
+            
+            // turn provided input into usable datastructure
+            let tile_coords: Vec<&str> = input.trim().split(',').collect();
+            if tile_coords.len() != 2 {
+                continue;
+            }
+
+            // parse input into u8
+            let x: u8 = match tile_coords[0].parse() {
+                Ok(num) => num,
+                Err(_) => continue,
+            };
+
+            let y: u8 = match tile_coords[1].parse() {
+                Ok(num) => num,
+                Err(_) => continue,
+            };
+
+            let n = self.board.length;
+            if x > n || y > n {
+                println!("Provided coords are outside of board space. Choose again:");
+                continue;
+            }
+
+            let tile_is_taken = self.board.cells.contains_key(&(x,y));
+            if tile_is_taken {
+                println!("Tile is already chosen. Choose another tile.");
+                continue;
+            }
+
+            return (x,y);
+        }
     }
 }
 
