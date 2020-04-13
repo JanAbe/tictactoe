@@ -14,20 +14,19 @@ fn main() {
     };
 
     let mut game = Game::new(board_length);
-    println!("");
     game.board.draw(); // show empty board, before anyone has made a move
     game.play();
 }
 
 struct Game{
-    status: GameStatus,
+    // state: GameState,
     turn_counter: u8,
     board: Board,
     win_combinations: Vec<Vec<(u8,u8)>>,
 }
 
 #[derive(PartialEq, Eq)]
-enum GameStatus {
+enum GameState {
     Playing,
     Drawn,
     Over,
@@ -38,7 +37,6 @@ impl Game{
     fn new(length: u8) -> Game {
         let board = Board::new(length);
         Game {
-            status: GameStatus::Playing,
             turn_counter: 0,
             win_combinations: board.generate_win_combinations(),
             board,
@@ -47,29 +45,34 @@ impl Game{
 
     /// play starts a game of tic tac toe
     fn play(&mut self) {
-        while self.status == GameStatus::Playing {
-            self.play_turn();
-        }
-
-        if self.status == GameStatus::Drawn {
-            println!("Game over, it is a draw!");
-            return;
-        }
-
-        if self.turn_counter % 2 == 0 {
-            println!("Game over, player X has won!");
-        } else {
-            println!("Game over, player O has won!");
+        loop {
+            match self.play_turn() {
+                GameState::Playing => {
+                    continue;
+                },
+                GameState::Drawn => {
+                    println!("Game over, it is a draw!");
+                    break;
+                },
+                GameState::Over => {
+                    if self.turn_counter % 2 == 0 {
+                        println!("Game over, player X has won!");
+                    } else {
+                        println!("Game over, player O has won!");
+                    }
+                    break;
+                }
+            }
         }
     }
 
-    /// get_status gets the status of the game that is being played.
-    /// It looks if the status is over by looking if a player has won by looking at all possible win combinations,
+    /// get_state gets the state of the game that is being played.
+    /// It looks if the state is over by looking if a player has won by looking at all possible win combinations,
     /// for each win combination it looks which player has chosen the tile, and if all tiles within the
     /// winnable combination are chosen by the same player.
-    /// If no player can win, the status becomes Drawn.
-    /// If neither are the case, the status stays Playing.
-    fn get_status(&self) -> GameStatus {
+    /// If no player can win, the state becomes Drawn.
+    /// If neither are the case, the state stays Playing.
+    fn get_state(&self) -> GameState {
         let mut player_won = false;
         for i in 0..self.win_combinations.len() {
             player_won = match self.board.cells.get(&self.win_combinations[i][0]) {
@@ -91,19 +94,19 @@ impl Game{
         }
 
         if player_won {
-            return GameStatus::Over;
+            return GameState::Over;
         }
 
         if self.turn_counter == self.board.length*self.board.length {
-            return GameStatus::Drawn;
+            return GameState::Drawn;
         }
 
-        return GameStatus::Playing;
+        return GameState::Playing;
     }
 
     /// play_turn plays a turn of the game. It prompts a player to input his new move, 
-    /// updates the board and increases the turn counter.
-    fn play_turn(&mut self) {
+    /// updates the board and increases the turn counter, returning the new GameState.
+    fn play_turn(&mut self) -> GameState {
         self.turn_counter += 1;
 
         let is_xs_turn = self.turn_counter % 2 == 0;
@@ -120,7 +123,7 @@ impl Game{
         
         let tile_coords: Vec<&str> = tile_coords.trim().split(',').collect();
         if tile_coords.len() != 2 {
-            self.play_turn()
+            self.play_turn();
         }
 
         let x: u8 = match tile_coords[0].parse() {
@@ -153,7 +156,8 @@ impl Game{
 
         println!("");
         self.board.draw();
-        self.status = self.get_status();
+        // self.state = self.get_state();
+        return self.get_state();
     }
 }
 
