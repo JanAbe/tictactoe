@@ -3,17 +3,8 @@ use std::cmp::Eq;
 use std::collections::HashMap;
 
 fn main() {
-    println!("Enter your wished board length below: (default length is 3)");
-    let mut board_length = String::new();
-    io::stdin().read_line(&mut board_length)
-        .expect("Failed to read board length input");
-    
-    let board_length: u8 = match board_length.trim().parse() {
-        Ok(num) => num,
-        Err(_) => 3, // if no number is provided, give board a default length of 3
-    };
-
-    let mut game = Game::new(board_length);
+    const BOARD_LENGTH: u8 = 3;
+    let mut game = Game::new(BOARD_LENGTH);
     game.board.draw(); // show empty board, before anyone has made a move
     game.play();
 }
